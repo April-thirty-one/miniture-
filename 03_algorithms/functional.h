@@ -22,8 +22,7 @@ struct binary_function
 {
     typedef Arg1    first_argument_type;
     typedef Arg2    second_argument_type;
-    tpyedef Result  result_type;
-};
+    typedef Result  result_type; };
 
 // 函数对象 -- 加法
 template <typename Type>
@@ -133,10 +132,10 @@ struct greater : public binary_function<Type, Type, bool>
 template <typename Type>
 struct less : public binary_function<Type, Type, bool>
 {
-    bool opoerator()(const Type & x, const Type & y) const 
-    {
-        return x < y;
-    }
+  bool operator()(const Type & x, const Type & y) 
+  {
+    return x < y;
+  }
 };
 
 // 函数对象：大于等于
@@ -205,7 +204,7 @@ struct selectfirst : unarg_function<Pair, typename Pair::first_type>
 {
     const typename Pair::first_type & operator()(const Pair & x) const 
     {
-        reutnr x.first;
+        return x.first;
     }
 };
 
@@ -215,7 +214,7 @@ struct selectsecond : unarg_function<Pair, typename Pair::second_type>
 {
     const typename Pair::second_type & operator()(const Pair & x) const 
     {
-        reutnr x.second;
+        return x.second;
     }
 };
 
@@ -253,7 +252,7 @@ struct hash<Type *>
 {
     size_t operator()(Type * p) const noexcept
     {
-        return reinterpret_cast<size_t>(P);
+        return reinterpret_cast<size_t>(p);
     }
 };
 

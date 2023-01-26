@@ -24,7 +24,7 @@ void push_heap_aux(RandomIter first, Distance holeIndex, Distance topIndex, Type
     auto parent = (holeIndex - 1) / 2;                          // 得到父节点的 index
     while (holeIndex > topIndex && *(first + parent) < value)   
     {
-        *(first + holeIndex) = *(first + paret);
+        *(first + holeIndex) = *(first + parent);
         holeIndex = parent;
         parent = (holeIndex - 1) / 2;
     }
@@ -90,7 +90,7 @@ void adjust_heap(RandomIter first, Distance holeIndex, Distance len, Type value)
         }
         *(first + holeIndex) = *(first + rchild);
         holeIndex = rchild;
-        rchild = 2 * (rchild + 1)
+        rchild = 2 * (rchild + 1);
     }
     if (rchild == len)
     {
@@ -131,7 +131,7 @@ void adjust_heap(RandomIter first, Distance holeIndex, Distance len, Type value,
         }
         *(first + holeIndex) = *(first + rchild);
         holeIndex = rchild;
-        rchild = 2 * (rchild + 1)
+        rchild = 2 * (rchild + 1);
     }
     if (rchild == len)
     {

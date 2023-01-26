@@ -96,11 +96,15 @@ struct iterator_traits<const T *>
 };
 
 template <typename T, typename U, bool = has_iterator_cat<iterator_traits<T>>::value>
-struct has_iterator_cat_of : public m_bool_constant<std::is_convertible<typename iterator_traits<T>::iterator_category, U>::value> {};
+struct has_iterator_cat_of 
+  : public bool_constant<std::is_convertible<
+    typename iterator_traits<T>::iterator_category, U>::value> 
+{
+};
 
 // 萃取某种迭代器
 template <typename T, typename U>
-struct has_iterator_cat_of<T, U, false> : public m_false_type {};
+struct has_iterator_cat_of<T, U, false> : public false_type {};
 
 template <typename Iter>
 struct is_input_iterator : public has_iterator_cat_of<Iter, input_iterator_tag> {};
@@ -118,7 +122,7 @@ template <typename Iter>
 struct is_random_access_iterator : public has_iterator_cat_of<Iter, random_access_iterator_tag> {};
 
 template <typename Iterator>
-struct is_iterator : public m_bool_constant<is_input_iterator<Iterator>::value ||
+struct is_iterator : public mystl::bool_constant<is_input_iterator<Iterator>::value ||
         is_output_iterator<Iterator>::value>
 {
 };
@@ -180,7 +184,7 @@ typename iterator_traits<RandomIterator>::difference_type distance_dispatch(Rand
 template <typename InputIterator, typename Distance>
 void advance(InputIterator & i, Distance n)
 {
-    advance(i, n, iterator_category(i));
+    advance(i, n, mystl::iterator_category(i));
 }
 
 

@@ -303,9 +303,9 @@ bool equal(InputIter1 first1, InputIter1 last1, InputIter2 first2, BinaryPredica
 template <typename OutputIter, typename Type, typename Size>
 OutputIter unchecked_fill_n(OutputIter first, Size count, const Type & value)
 {
-    for (; n > 0; --n, ++first) 
+    for (; count > 0; --count, ++first) 
     {
-        *fisrt = value;
+        *first = value;
     }
     return first;
 }

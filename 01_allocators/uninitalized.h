@@ -25,7 +25,7 @@ ForwardIter unchecked_uninit_copy(InputIter first, InputIter last, ForwardIter r
 template <typename InputIter, typename ForwardIter>
 ForwardIter unchecked_uninit_copy(InputIter first, InputIter last, ForwardIter result, std::false_type)
 {
-    auto current = retult;
+    auto current = result;
     try 
     {
         for (; first != last; ++first, ++current)
@@ -35,10 +35,10 @@ ForwardIter unchecked_uninit_copy(InputIter first, InputIter last, ForwardIter r
     }
     catch (...)
     {
-        for (; retult != current; --current)
+        for (; result != current; --current)
         {
             mystl::destroy(&*current);
-        }
+        }
     }
     return current;
 }
@@ -46,7 +46,7 @@ ForwardIter unchecked_uninit_copy(InputIter first, InputIter last, ForwardIter r
 template <typename InputIter, typename ForwardIter>
 ForwardIter uninitialized_copy(InputIter first, InputIter last, ForwardIter result)
 {
-    return mystl::unckecked_uninit_copy(first, last, result, td::is_trivially_copy_assignable<typename iterator_traits<ForwardIter>::value_type>{});
+    return mystl::unchecked_uninit_copy(first, last, result, std::is_trivially_copy_assignable<typename iterator_traits<ForwardIter>::value_type>{});
 }
 
 /*****************************************************************************************/
@@ -56,7 +56,7 @@ ForwardIter uninitialized_copy(InputIter first, InputIter last, ForwardIter resu
 template <typename InputIter, typename ForwardIter, typename Size>
 ForwardIter unchecked_uninit_copy_n(InputIter first, ForwardIter result, Size n, std::true_type)
 {
-    return mystl::copy_n(first, retult, n);
+    return mystl::copy_n(first, result, n);
 }
 
 template <typename InputIter, typename ForwardIter, typename Size>

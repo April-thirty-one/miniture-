@@ -95,7 +95,7 @@ public:
 private:
     void allocate_buffer();
     void initialize_buffer(const Type &, std::true_type) {}
-    void initialize_buffer(const Type &, std::false_type) {mystl::uninitialized_fill_n(buffer, len, value);}
+    void initialize_buffer(const Type & value, std::false_type) {mystl::uninitialized_fill_n(buffer, len, value);}
 
 private:
     temporary_buffer(const temporary_buffer &);
