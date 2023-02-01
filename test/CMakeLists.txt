@@ -4,6 +4,6 @@ include_directories(../include)
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-add_library(Lib_src STATIC ${DIR_LIB_SRCS})
+add_library(Lib_test STATIC ${DIR_LIB_SRCS})
 
-message(STATIC "--------------- src 生成静态库完成 ---------------")
+message(STATIC "--------------- test 生成静态库完成 ---------------")
