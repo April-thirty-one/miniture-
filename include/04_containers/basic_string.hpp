@@ -30,6 +30,65 @@ struct char_traits {
     static char_type* fill(char_type* dst, char_type value, size_t count);
 };
 
+template <class CharType>
+size_t char_traits<CharType>::length(const char_type* str) {
+    size_t result = 0;
+    for (; *str != char_type(nullptr); ++str) {
+        ++result;
+    }
+    return result;
+}
+
+template <class CharType>
+int char_traits<CharType>::compare(const char_type *str1, const char_type *str2, size_t n) {
+    for (; n > 0; --n, ++str1, ++str2) {
+        if (*str1 > *str2) {
+            return 1;
+        }
+        else if (*str1 < *str2) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+template <class CharType>
+typename char_traits<CharType>::char_type* char_traits<CharType>::copy(char_type* dst, const char_type* src, size_t n) {
+    assert(src + n <= dst || dst + n <= src);
+    char_type* result = dst;
+    for (; n != 0; --n, ++dst, ++src) {
+        *dst = *src;
+    }
+    return result;
+}
+
+template <class CharType>
+typename char_traits<CharType>::char_type* char_traits<CharType>::move(char_type* dst, const char_type* src, size_t n) {
+    char_type* result = dst;
+    if (dst < src) {
+        for (; n != 0; --n, ++dst, ++src) {
+            *dst = *src;
+        }
+    }
+    else if (dst > src) {
+        dst += n;
+        src += n;
+        for (; n != 0; --n) {
+            *--dst = *--src;
+        }
+    }
+    return result;
+}
+
+template <class CharType>
+typename char_traits<CharType>::char_type* char_traits<CharType>::fill(char_type* dst, char_type value, size_t count) {
+    char_type* result = dst;
+    for (; count > 0; --count, ++dst) {
+        *dst = value;
+    }
+    return result;
+}
+
 // partialized char_traits<char>
 template <>
 struct char_traits<char> {
@@ -399,6 +458,8 @@ public:
         return append(str, pos, str, size_ - pos);
     }
 
+    basic_string& append(const basic_string& str, size_type pos, size_type count);
+
     basic_string& append(const_pointer s) {
         return append(s, char_traits::length(s));
     }
@@ -418,6 +479,7 @@ public:
     void resize(size_type count) {
         return resize(count, value_type());
     }
+    void resize(size_type count, value_type value);
 
     void clear() {
         size_ = 0;
@@ -691,79 +753,158 @@ shrink_to_fit()
 }
 
 // 在 pos 处插入一个元素
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-template <class CharType>
-size_t char_traits<CharType>::length(const char_type* str) {
-    size_t result = 0;
-    for (; *str != char_type(nullptr); ++str) {
-        ++result;
+template <class CharType, class CharTraits>
+typename basic_string<CharType, CharTraits>::iterator basic_string<CharType, CharTraits>::insert(const_iterator pos, value_type value) {
+    iterator result = const_cast<iterator>(pos);
+    if (size_ == cap_) {
+        return reallocate_and_fill(result, 1, value);
     }
+    char_traits::move(result + 1, result, end() - result);
+    ++size_;
+    *result = value;
     return result;
 }
 
-template <class CharType>
-int char_traits<CharType>::compare(const char_type *str1, const char_type *str2, size_t n) {
-    for (; n > 0; --n, ++str1, ++str2) {
-        if (*str1 > *str2) {
-            return 1;
-        }
-        else if (*str1 < *str2) {
-            return -1;
-        }
+// 在 pos 处插入 n 个元素
+template <class CharType, class CharTraits>
+typename basic_string<CharType, CharTraits>::iterator basic_string<CharType, CharTraits>::insert(const_iterator pos, size_type count, value_type value) {
+    iterator result = const_cast<iterator>(pos);
+    if (count == 0) {
+        return result;
     }
-    return 0;
-}
-
-template <class CharType>
-typename char_traits<CharType>::char_type* char_traits<CharType>::copy(char_type* dst, const char_type* src, size_t n) {
-    assert(src + n <= dst || dst + n <= src);
-    char_type* result = dst;
-    for (; n != 0; --n, ++dst, ++src) {
-        *dst = *src;
+    if (cap_ - size_ < count) {
+        return reallocate_and_fill(result, count, value);
     }
+    if (pos == end()) {
+        char_traits::fil(end(), value, count);
+        size_ += count;
+        return result;
+    }
+    char_traits::move(result + count, result, count);
+    char_traits::fill(result, value, count);
+    size_  += count;
     return result;
 }
 
-template <class CharType>
-typename char_traits<CharType>::char_type* char_traits<CharType>::move(char_type* dst, const char_type* src, size_t n) {
-    char_type* result = dst;
-    if (dst < src) {
-        for (; n != 0; --n, ++dst, ++src) {
-            *dst = *src;
-        }
+// 在 pos 处插入 []
+template <class CharType, class CharTraits>
+template <class Iter>
+typename basic_string<CharType, CharTraits>::iterator
+basic_string<CharType, CharTraits>::
+insert(const_iterator pos, Iter first, Iter last) {
+    iterator r = const_cast<iterator>(pos);
+    const size_type len = mystl::distance(first, last);
+    if (len == 0)
+        return r;
+    if (cap_ - size_ < len) {
+        return reallocate_and_copy(r, first, last);
     }
-    else if (dst > src) {
-        dst += n;
-        src += n;
-        for (; n != 0; --n) {
-            *--dst = *--src;
-        }
+    if (pos == end()) {
+        mystl::uninitialized_copy(first, last, end());
+        size_ += len;
+        return r;
     }
+    char_traits::move(r + len, r, len);
+    mystl::uninitialized_copy(first, last, r);
+    size_ += len;
+    return r;
+}
+
+// 在末尾添加 count 个 ch
+template <class CharType, class CharTraits>
+basic_string<CharType, CharTraits>& basic_string<CharType, CharTraits>::append(size_type count, value_type value) {
+    THROW_LENGTH_ERRPR_IF(size_ > max_size() - count, "basic_string<chartype, chartraits>'s size too big");
+    if (cap_ - size_ < count) {
+        reallocate(count);
+    }
+    char_traits::fill(buffer_ + size_, value, count);
+    size_ += count;
+    return *this;
+}
+
+// 在末尾添加 [str[pos] str[pos + count]) 一段
+template <class CharType, class CharTraits>
+basic_string<CharType, CharTraits>& basic_string<CharType, CharTraits>::append(const basic_string& str, size_type pos, size_type count) {
+    THROW_LENGTH_ERRPR_IF(size_ > max_size() - count, "basic_string<chartypem chartraits>'s size too big");
+    if (count == 0) {
+        return *this;
+    }
+    if (cap_ - size_ < count) {
+        reallocate(count);
+    }
+    char_traits::copy(buffer_ + size_, str.buffer + pos, count);
+    size_ += count;
+    return *this;
+}
+
+// 在末尾添加 [s, s+ count) 一段
+template <class CharType, class CharTraits>
+basic_string<CharType, CharTraits>& basic_string<CharType, CharTraits>::append(const_pointer s, size_type count) {
+    THROW_LENGTH_ERROR_IF(size_ > max_size() - count, "basic_string<chartype, traits>'s size too big");
+    if (cap_ - size_ < count) {
+        reallocate(count);
+    }
+    char_traits::copy(buffer_ + size_, s, count);
+    size_ += count;
+    return *this;
+}
+
+// 删除 pos 处的元素
+template <class CharType, class CharTraits>
+typename basic_string<CharType, CharTraits>::iterator basic_string<CharType, CharTraits>::erase(const_iterator pos) {
+    MYSTL_DEBUG(pos != end());
+    iterator result = const_cast<iterator>(pos);
+    char_traits::move(result, pos + 1, end() - pos - 1);
+    --size_;
     return result;
 }
 
-template <class CharType>
-typename char_traits<CharType>::char_type* char_traits<CharType>::fill(char_type* dst, char_type value, size_t count) {
-    char_type* result = dst;
-    for (; count > 0; --count, ++dst) {
-        *dst = value;
+// 删除 [first, last) 的元素
+template <class CharType, class CharTraits>
+typename basic_string<CharType, CharTraits>::iterator basic_string<CharType, CharTraits>::erase(const_iterator first, const_iterator last) {
+    if (first == begin() && last == end()) {
+        clear();
+        return end();
     }
+    const size_type n = end() - last;
+    iterator result = const_cast<iterator>(first);
+    char_traits::move(result, last, n);
+    size_ -= (last - first);
     return result;
 }
+
+// 重置容器大小
+template <class CharType, class CharTraits>
+void basic_string<CharType, CharTraits>::resize(size_type count, value_type value) {
+    if (count < size_) {
+        erase(buffer_ + count, buffer_ + size_);
+    }
+    else {
+        append(count - size_, value);
+    }
+}
+
+// 比较两个 basic_string，小于返回 -1，大于返回 1，等于返回 0
+template <class CharType, class CharTraits>
+int basic_string<CharType, CharTraits>::compare(const basic_string& other) const {
+    return compare_cstr(buffer_, size_, other.buffer_, other.size_);
+}
+
+// 从 pos1 下标开始的 count1 个字符跟另一个 basic_string 比较
+template <class CharType, class CharTraits>
+int basic_string<CharType, CharTraits>::compare(size_type pos1, size_type count1, const basic_string& other) const {
+    auto n1 = mystl::min(count1, size_ - pos1);
+    return compare_cstr(buffer_ + pos1, n1, other.buffer_, other.size_);
+}
+
+
+
+
+
+
+
+
+
 
 
 }
